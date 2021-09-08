@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 08-Set-2021 às 05:40
+-- Tempo de geração: 08-Set-2021 às 12:25
 -- Versão do servidor: 10.4.17-MariaDB
 -- versão do PHP: 7.4.13
 
@@ -68,7 +68,7 @@ CREATE TABLE `contrato` (
 INSERT INTO `contrato` (`id`, `id_imovel`, `id_cliente`, `data_inicio`, `data_fim`, `taxa_administracao`, `valor_aluguel`, `valor_condominio`, `valor_iptu`) VALUES
 (1, 2, 23, '2021-04-18', '2022-04-18', '100', '1200', '200', '200'),
 (3, 2, 23, '2021-09-08', '2021-09-30', '100', '1200', '200', '200'),
-(4, 3, 25, '2021-09-09', '2022-02-24', '1000', '12000', '2000', '2000');
+(4, 3, 25, '2021-09-30', '2022-02-01', '1000', '12000', '2000', '2000');
 
 -- --------------------------------------------------------
 
@@ -105,11 +105,37 @@ INSERT INTO `imovel` (`id`, `id_proprietario`, `rua`, `numero`, `complemento`, `
 CREATE TABLE `mensalidade` (
   `id` int(11) NOT NULL,
   `id_contrato` int(11) NOT NULL,
+  `mes` date NOT NULL,
   `mensalidade` decimal(10,0) NOT NULL,
   `repasse` decimal(10,0) NOT NULL,
   `mensalidade_paga` tinyint(4) NOT NULL DEFAULT 0,
   `repasse_realizado` tinyint(4) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Extraindo dados da tabela `mensalidade`
+--
+
+INSERT INTO `mensalidade` (`id`, `id_contrato`, `mes`, `mensalidade`, `repasse`, `mensalidade_paga`, `repasse_realizado`) VALUES
+(1, 4, '2021-09-01', '16000', '13000', 0, 0),
+(2, 4, '2021-10-01', '16000', '13000', 0, 0),
+(3, 4, '2021-11-01', '16000', '13000', 0, 0),
+(5, 4, '2022-01-01', '16000', '13000', 0, 0),
+(6, 4, '2022-02-01', '16000', '13000', 0, 0),
+(7, 4, '2021-12-01', '16000', '13000', 0, 0),
+(8, 3, '2021-09-01', '1600', '1300', 1, 0),
+(9, 1, '2021-04-01', '1600', '1300', 1, 1),
+(10, 1, '2021-05-01', '1600', '1300', 1, 0),
+(11, 1, '2021-06-01', '1600', '1300', 0, 0),
+(12, 1, '2021-07-01', '1600', '1300', 0, 0),
+(13, 1, '2021-08-01', '1600', '1300', 0, 0),
+(14, 1, '2021-09-01', '1600', '1300', 0, 0),
+(15, 1, '2021-10-01', '1600', '1300', 0, 0),
+(16, 1, '2021-11-01', '1600', '1300', 0, 0),
+(17, 1, '2021-12-01', '1600', '1300', 0, 0),
+(18, 1, '2022-01-01', '1600', '1300', 0, 0),
+(19, 1, '2022-02-01', '1600', '1300', 0, 0),
+(20, 1, '2022-03-01', '1600', '1300', 0, 0);
 
 -- --------------------------------------------------------
 
@@ -193,7 +219,7 @@ ALTER TABLE `imovel`
 -- AUTO_INCREMENT de tabela `mensalidade`
 --
 ALTER TABLE `mensalidade`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de tabela `proprietario`

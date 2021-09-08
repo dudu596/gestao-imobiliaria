@@ -36,6 +36,7 @@ class ContratoController
                     $contrato->insertContrato($_POST);
                 }
                 unset($_POST);
+                $this->gerar($id);
                 header("Location: " . URL . "/contrato/listar");
             }
         }
@@ -62,18 +63,96 @@ class ContratoController
     public function mensalidade($id)
     {
         $mensalidade = new Mensalidade;
-        $array_mensalidades = $mensalidade->getAllMensalidade();
+        $array_mensalidades = $mensalidade->getMensalidadeByContrato($id);
         require_once APP . "view/contrato/mensalidade.php";
     }
 
     public function gerar($id)
     {
         $mensalidade = new Mensalidade;
-        $array_parametros = $mensalidade->getContrato($id);
-        echod(strtotime($array_parametros->data_fim) - strtotime($array_parametros->data_inicio));
+        $contrato = $mensalidade->getContrato($id);
 
-        // $array_parametros = 
-        $mensalidade->insertMensalidade($array_parametros);
-        header("Location: " . URL . "/contrato/mensalidade/". $id);
+        $data_inicio = strtotime($contrato->data_inicio);
+        $data_fim = strtotime($contrato->data_fim);
+
+        $ano_inicio = date('Y', $data_inicio);
+        $ano_fim = date('Y', $data_fim);
+
+        $mes_inicio = date('m', $data_inicio);
+        $mes_fim = date('m', $data_fim);
+
+        $dia_inicio = date('d', $data_inicio);
+        $dia_fim = date('d', $data_fim);
+
+        $quantidade_meses = (($ano_fim - $ano_inicio) * 12) + ($mes_fim - $mes_inicio);
+
+        if ($quantidade_meses > 12) {
+            $quantidade_meses = 12;
+        }
+
+        $array_meses = $mensalidade->getMeses($id);
+        for ($i = 0; $i < $quantidade_meses; $i++) {
+
+            switch ($mes_inicio) {
+                case 4:
+                case 6:
+                case 9:
+                case 11:
+                    $dias_mes = 31;
+                    break;
+                case 2:
+                    $dias_mes = 28;
+                    break;
+                default:
+                    $dias_mes = 30;
+                    break;
+            }
+            $ano_inicio;
+
+            $mes_inicio++;
+            if ($mes_inicio < 10) {
+                $mes_inicio = "0" . $mes_inicio;
+            }
+            if ($mes_inicio > 12) {
+                $mes_inicio = "01";
+                $ano_inicio++;
+            }
+            $array_parametros['mes'] = $ano_inicio . "-" . $mes_inicio . "-01";
+            // verificar data para calculo de mensalidade
+            if (!in_array($array_parametros['mes'], $array_meses)) {
+                $array_parametros['id_contrato'] = $contrato->id;
+                $array_parametros['mensalidade'] = $contrato->valor_aluguel + $contrato->valor_condominio + $contrato->valor_iptu;
+                $array_parametros['repasse'] = $contrato->valor_aluguel + $contrato->valor_iptu - $contrato->taxa_administracao;
+                $array_parametros['mensalidade_paga'] = 0;
+                $array_parametros['repasse_realizado'] = 0;
+                $mensalidade->insertMensalidade($array_parametros);
+            }
+        }
+
+        header("Location: " . URL . "/contrato/mensalidade/" . $id);
+    }
+    public function mensalidadePaga($id, $id_contrato)
+    {
+        $mensalidade = new Mensalidade;
+        $array_mensalidades = $mensalidade->statusMensalidade($id);
+        header("Location: " . URL . "/contrato/mensalidade/" . $id_contrato);
+    }
+    public function repasseRealizado($id, $id_contrato)
+    {
+        $mensalidade = new Mensalidade;
+        $array_mensalidades = $mensalidade->statusRepasse($id);
+        header("Location: " . URL . "/contrato/mensalidade/" . $id_contrato);
+    }
+    public function mensalidadeCancelada($id, $id_contrato)
+    {
+        $mensalidade = new Mensalidade;
+        $array_mensalidades = $mensalidade->statusMensalidade($id, 0);
+        header("Location: " . URL . "/contrato/mensalidade/" . $id_contrato);
+    }
+    public function repasseCancelado($id, $id_contrato)
+    {
+        $mensalidade = new Mensalidade;
+        $array_mensalidades = $mensalidade->statusRepasse($id, 0);
+        header("Location: " . URL . "/contrato/mensalidade/" . $id_contrato);
     }
 }

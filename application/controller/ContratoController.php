@@ -14,7 +14,7 @@ class ContratoController
     public function listar()
     {
         $objeto_contrato = new Contrato;
-        $array_contratos = $objeto_contrato->getAllContrato();
+        $array_contratos = $objeto_contrato->getAll();
         require_once APP . "view/contrato/listar.php";
     }
 
@@ -23,30 +23,41 @@ class ContratoController
         $contrato = new Contrato;
         $objeto_proprietario = new Proprietario;
         $objeto_cliente = new Cliente;
-        $array_proprietario = $objeto_proprietario->getAllProprietario();
-        $array_cliente = $objeto_cliente->getAllCliente();
-
-        if (!empty($_POST)) {
-            if (!empty($_POST['id_imovel'])) {
-                unset($_POST["id_proprietario"]);
-                if ($id) {
-                    $_POST['id'] = $id;
-                    $contrato->updateContrato($_POST);
-                } else {
-                    $contrato->insertContrato($_POST);
-                }
-                unset($_POST);
-                $this->gerar($id);
-                header("Location: " . URL . "/contrato/listar");
-            }
+        $array_proprietario = $objeto_proprietario->getAll();
+        $array_cliente = $objeto_cliente->getAll();
+        if (isset($_POST['erro'])) {
+            unset($_POST);
         }
+        if (!empty($_POST)) {
+            $array_campos = ["id_imovel", "id_cliente", "data_inicio", "data_fim", "taxa_administracao", "valor_aluguel", "valor_condominio", "valor_iptu"];
+            $array_tipo =   ["numerico", "numerico", "data", "data", "numerico", "numerico", "numerico", "numerico"];
+            if (verificaPost($_POST, $array_campos, $array_tipo)) {
+                if (validaNumero($id)) {
+                    $_POST['id'] = $id;
+                    $contrato->update($_POST);
+                } else {
+                    $id_mensalidade = $contrato->insert($_POST);
+                    $this->gerar($id_mensalidade);
+                }
+                header("Location: " . URL . "/contrato/listar");
+                exit;
+            }
+            if (validaNumero($id)) {
+                header("Location: " . URL . "/contrato/cadastro/{$id}?erro=" . $_POST['erro']);
+                exit;
+            }
+            header("Location: " . URL . "/contrato/cadastro?erro=" . $_POST['erro']);
+            exit;
+        }
+
         $titulo = "CADASTRO DE CONTRATO";
-        if ($id) {
+        if (validaNumero($id)) {
             $contrato_atualiza = $contrato->getContrato($id);
             $titulo = "ALTERAR - " . $titulo;
         } else {
             $titulo = "CRIAR - " . $titulo;
         }
+
         require_once APP . "view/contrato/cadastro.php";
     }
 
@@ -55,7 +66,7 @@ class ContratoController
         $contrato = new Contrato;
 
         if (is_numeric($id)) {
-            $contrato->deleteContrato($id);
+            $contrato->delete($id);
         }
         header("Location: " . URL . "/contrato/listar");
     }
@@ -84,30 +95,36 @@ class ContratoController
         $dia_inicio = date('d', $data_inicio);
         $dia_fim = date('d', $data_fim);
 
-        $quantidade_meses = (($ano_fim - $ano_inicio) * 12) + ($mes_fim - $mes_inicio);
+        unset($data_inicio);
+        unset($data_fim);
 
-        if ($quantidade_meses > 12) {
-            $quantidade_meses = 12;
+        $quantidade_meses = (($ano_fim - $ano_inicio) * 12) + ($mes_fim - $mes_inicio) + 1;
+        $quantidade_pagos = $mensalidade->getCountPagos($id)->total;
+        $ultima = true;
+        if ($quantidade_meses > (12 + $quantidade_pagos)) {
+            $quantidade_meses = 12 + $quantidade_pagos;
+            $ultima = false;
         }
 
         $array_meses = $mensalidade->getMeses($id);
-        for ($i = 0; $i < $quantidade_meses; $i++) {
+        for ($i = 1; $i <= $quantidade_meses; $i++) {
 
             switch ($mes_inicio) {
                 case 4:
                 case 6:
                 case 9:
                 case 11:
-                    $dias_mes = 31;
+                    $dias_mes = 30;
                     break;
                 case 2:
                     $dias_mes = 28;
                     break;
                 default:
-                    $dias_mes = 30;
+                    $dias_mes = 31;
                     break;
             }
-            $ano_inicio;
+            $porcentagem_inicio = ($dias_mes - $dia_inicio + 1) / $dias_mes;
+            $porcentagem_fim = $dia_fim / $dias_mes;
 
             $mes_inicio++;
             if ($mes_inicio < 10) {
@@ -117,15 +134,22 @@ class ContratoController
                 $mes_inicio = "01";
                 $ano_inicio++;
             }
+
             $array_parametros['mes'] = $ano_inicio . "-" . $mes_inicio . "-01";
-            // verificar data para calculo de mensalidade
+
             if (!in_array($array_parametros['mes'], $array_meses)) {
                 $array_parametros['id_contrato'] = $contrato->id;
-                $array_parametros['mensalidade'] = $contrato->valor_aluguel + $contrato->valor_condominio + $contrato->valor_iptu;
-                $array_parametros['repasse'] = $contrato->valor_aluguel + $contrato->valor_iptu - $contrato->taxa_administracao;
                 $array_parametros['mensalidade_paga'] = 0;
                 $array_parametros['repasse_realizado'] = 0;
-                $mensalidade->insertMensalidade($array_parametros);
+
+                if ($i === 1) {
+                    $this->calcularMensalidade($array_parametros, $contrato, $porcentagem_inicio);
+                } else if ($i == $quantidade_meses && $ultima) {
+                    $this->calcularMensalidade($array_parametros, $contrato, $porcentagem_fim);
+                } else {
+                    $this->calcularMensalidade($array_parametros, $contrato);
+                }
+                $mensalidade->insert($array_parametros);
             }
         }
 
@@ -154,5 +178,16 @@ class ContratoController
         $mensalidade = new Mensalidade;
         $array_mensalidades = $mensalidade->statusRepasse($id, 0);
         header("Location: " . URL . "/contrato/mensalidade/" . $id_contrato);
+    }
+    private function calcularMensalidade(&$array_parametros, $contrato, $porcentagem_cobrado = 1)
+    {
+        $valor_aluguel = $contrato->valor_aluguel * $porcentagem_cobrado;
+        $valor_condominio = $contrato->valor_condominio * $porcentagem_cobrado;
+        $valor_iptu = $contrato->valor_iptu * $porcentagem_cobrado;
+        $taxa_administracao = $contrato->taxa_administracao * $porcentagem_cobrado;
+
+        $array_parametros['mensalidade'] = $valor_aluguel + $valor_condominio + $valor_iptu;
+        $array_parametros['repasse'] = $valor_aluguel + $valor_iptu - $taxa_administracao;
+        return true;
     }
 }

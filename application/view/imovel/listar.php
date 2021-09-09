@@ -6,9 +6,7 @@
     <a href="<?= URL ?>/imovel/cadastro" class="btn btn-primary float-end m-2">Cadastrar novo</a>
 </div>
 
-<div class="col-3 m-2 float-end">
-    <input class="form-control" id="" placeholder="Pesquisa.."></input>
-</div>
+
 <table class="table">
     <thead>
         <tr>

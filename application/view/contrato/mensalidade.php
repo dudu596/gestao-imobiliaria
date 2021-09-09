@@ -6,9 +6,7 @@
     <a href="<?= URL ?>/contrato/gerar/<?= $id ?>" class="btn btn-primary float-end m-2">Gerar Mensalidades</a>
 </div>
 
-<div class="col-3 m-2 float-end">
-    <input class="form-control" id="" placeholder="Pesquisa.."></input>
-</div>
+
 <table class="table">
     <thead>
         <tr>
@@ -23,9 +21,9 @@
     <tbody>
         <?php foreach ($array_mensalidades as $mensalidade) { ?>
             <tr>
-                <td class="align-middle"><?= $mensalidade->mes ?></td>
-                <td class="align-middle"><?= $mensalidade->mensalidade ?></td>
-                <td class="align-middle"><?= $mensalidade->repasse ?></td>
+                <td class="align-middle"><?= date("d/m/Y", strtotime($mensalidade->mes)) ?></td>
+                <td class="align-middle">R$ <?= number_format($mensalidade->mensalidade, 2, ",", "") ?></td>
+                <td class="align-middle">R$ <?= number_format($mensalidade->repasse, 2, ",", "") ?></td>
                 <td class="align-middle"><?= ($mensalidade->mensalidade_paga ? "<span class='badge bg-success align-middle'>Pago</span>" : ($mensalidade->pagamento_atrasado ? "<span class='badge bg-danger align-middle'>Atrasado</span>" : "<span class='badge bg-warning align-middle'>Pendente</span>")) ?></td>
                 <td class="align-middle"><?= ($mensalidade->repasse_realizado ? "<span class='badge bg-success align-middle'>Pago</span>" : ($mensalidade->repasse_atrasado ?  "<span class='badge bg-danger align-middle'>Atrasado</span>" : "<span class='badge bg-warning align-middle'>Pendente</span>")) ?></td>
                 <td class="align-middle text-center">

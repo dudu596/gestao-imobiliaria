@@ -20,7 +20,6 @@
                 <a class="list-group-item list-group-item-action list-group-item-light p-3" href="<?= URL ?>/proprietario/">Proprietários</a>
                 <a class="list-group-item list-group-item-action list-group-item-light p-3" href="<?= URL ?>/imovel/">Imóveis</a>
                 <a class="list-group-item list-group-item-action list-group-item-light p-3" href="<?= URL ?>/contrato/">Contratos</a>
-                <a class="list-group-item list-group-item-action list-group-item-light p-3" href="<?= URL ?>/mensalidade/">Mensalidades</a>
             </div>
         </div>
         <!-- Page content wrapper-->

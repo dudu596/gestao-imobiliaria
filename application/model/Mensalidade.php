@@ -2,6 +2,11 @@
 
 class Mensalidade extends Contrato
 {
+    public function __construct()
+    {
+        Model::__construct();
+        $this->setTabela("mensalidade");
+    }
 
     public function getMensalidadeByContrato($id_contrato)
     {
@@ -14,42 +19,6 @@ class Mensalidade extends Contrato
         return $query->fetchAll();
     }
 
-    public function insertMensalidade($array_parametros)
-    {
-        $sql = "INSERT INTO mensalidade (id_contrato, mes, mensalidade, repasse, mensalidade_paga, repasse_realizado) VALUES (:id_contrato, :mes, :mensalidade, :repasse, :mensalidade_paga, :repasse_realizado)";
-        $query = $this->db->prepare($sql);
-        $query->execute($array_parametros);
-
-        return $this->db->lastInsertId();
-    }
-
-    public function getMensalidade($id)
-    {
-        $array_parametros['id'] = $id;
-        $sql = "SELECT * FROM mensalidade WHERE id = :id";
-
-        $query = $this->db->prepare($sql);
-        $query->execute($array_parametros);
-
-        return $query->fetch();
-    }
-
-    public function updateMensalidade($array_parametros)
-    {
-        $sql = "UPDATE mensalidade SET id_contrato = :id_contrato, mensalidade = :mensalidade, repasse = :repasse WHERE id = :id";
-
-        $query = $this->db->prepare($sql);
-        $query->execute($array_parametros);
-    }
-
-    public function deleteMensalidade($id)
-    {
-        $array_parametros['id'] = $id;
-        $sql = "DELETE FROM mensalidade WHERE id = :id";
-
-        $query = $this->db->prepare($sql);
-        $query->execute($array_parametros);
-    }
     public function getMeses($id_contrato)
     {
         $array_parametros['id_contrato'] = $id_contrato;
@@ -60,6 +29,7 @@ class Mensalidade extends Contrato
 
         return $query->fetchAll(PDO::FETCH_COLUMN, 0);
     }
+
     public function statusMensalidade($id, $status = 1)
     {
         $array_parametros['id'] = $id;
@@ -69,6 +39,7 @@ class Mensalidade extends Contrato
         $query = $this->db->prepare($sql);
         $query->execute($array_parametros);
     }
+
     public function statusRepasse($id, $status = 1)
     {
         $array_parametros['id'] = $id;
@@ -77,5 +48,16 @@ class Mensalidade extends Contrato
 
         $query = $this->db->prepare($sql);
         $query->execute($array_parametros);
+    }
+
+    public function getCountPagos($id_contrato)
+    {~
+        $array_parametros['id_contrato'] = $id_contrato;
+        $sql = "SELECT count(*) as total FROM mensalidade WHERE id_contrato = :id_contrato AND mensalidade_paga = 1 AND repasse_realizado = 1";
+
+        $query = $this->db->prepare($sql);
+        $query->execute($array_parametros);
+
+        return $query->fetch();
     }
 }
